@@ -1,0 +1,201 @@
+pragma solidity ^0.8.0; //SPDX-License-Identifier: UNLICENSED
+
+interface IERC20 {
+    
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+    
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+    
+    function approve(address spender, uint256 amount) external returns (bool);
+    
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    
+    event Approval(address indexed tokenOwner, address indexed spender,
+        uint tokens);
+    event Approval(address indexed to, uint256 AddedOrSubtractedAmount, uint256 newallowances);
+    event Transfer(address indexed from, address indexed to,
+        uint tokens);
+    event Transfer(address indexed from, address indexed to, address indexed requester,
+        uint256 tokens);
+    event TransferOwnership(address indexed from, address indexed to);
+}
+
+interface IERC20Metadata is IERC20 {
+    function name() external view returns (string memory);
+    
+    function symbol() external view returns (string memory);
+    
+    function decimal() external view returns (uint) ;
+    
+}
+
+contract CrownToken is IERC20, IERC20Metadata {
+    mapping(address => uint256) private balances;
+    
+    mapping(address => mapping (address => uint256)) private allowances;
+    
+    modifier onlyOwner() {
+        require(msg.sender == SuperOwner, "You're not authorized");
+        _;
+    }
+    modifier validAddress(address receiver){    
+        require(receiver == address(receiver),"Invalid address");
+        require(receiver != address(0));
+        _;
+    }
+    
+    //to check the validity of the address in 
+    // modifier validAddressList(address[] memory receiverList){    
+    //     for (uint256 i = 0; i < receiverList.length; i++) {
+    //     require(receiverList[i] == address(receiverList[i]),"Invalid address");
+    //     require(receiverList[i] != address(0));
+    //     }
+    //     _;
+    // }
+    
+    
+    event Mint(address indexed to, uint256 amount, uint256 newtotalsupply);
+    event Burn (address indexed from, uint256 amount, uint newtotalsupply);
+    
+    string private _name;
+    string private _symbol;
+    uint256 private _totalSupply;
+    uint8 private decimals;
+    address payable SuperOwner;
+    
+    
+    constructor(string memory name_, string memory symbol_, uint256 totalSupply_ , uint8 decimals_) {
+        _totalSupply = totalSupply_*(10**decimals_);
+        balances[msg.sender] = _totalSupply;
+        SuperOwner = payable(msg.sender) ;
+        _name = name_ ;
+        _symbol = symbol_;
+        decimals = decimals_ ;
+        
+    }
+    
+    function name() public view override returns (string memory) {
+        return _name;
+    }
+    function symbol() public view override returns (string memory){
+        return _symbol;
+    }
+    function decimal() public view override returns (uint) {
+        return decimals;
+    }
+    function totalSupply() public view override returns (uint256){ //return totalsupply in ETH unit
+        //uint256 _totalSupplyInETH = _totalSupply /(10**18);
+        return _totalSupply; 
+        //This function will return the number of all tokens allocated 
+        //by this contract regardless of owner.
+    }
+    
+    function balanceOf(address tokenOwner) public view override returns (uint) {
+        return balances[tokenOwner];
+        //balanceOf will return the current token balance of an account
+        //, identified by its owner’s address.
+    }
+    
+    //use for CWT transferring.
+    function transfer(address receiver, uint256 numTokens) public validAddress(receiver) override returns (bool) {
+        require(numTokens <= balances[msg.sender],"Insufficient balance");
+        //_beforeTokenTransfer(msg.sender, receiver, numTokens);
+        balances[msg.sender] -= numTokens;
+        balances[receiver]   += numTokens ;
+        emit Transfer(msg.sender, receiver, numTokens);
+        return true;
+        //delegate's token in their balances will be separated from their quota
+        //the transfer function is used to move numTokens amount of tokens from the owner’s balance 
+        //to that of another user, or receiver. The transferring owner is msg.sender 
+        //i.e. the one executing the function, which implies that only the owner of the tokens can transfer them to others.
+    }
+    
+    function transferOwnership(address oldOwner, address newOwner) public onlyOwner validAddress(newOwner) {
+        SuperOwner = payable(newOwner);
+        emit TransferOwnership(oldOwner,SuperOwner) ;
+        
+    }   
+    
+    function approve(address delegate,uint256 numTokens) public validAddress(delegate) override returns (bool) {
+        //require(msg.sender == SuperOwner , "Don't have permission");
+        require(numTokens <= balances[msg.sender], "not enough token to approve");
+        //require(allowed[SuperOwner][delegate] <= balances[SuperOwner] );
+        allowances[msg.sender][delegate] = numTokens;
+        emit Approval(msg.sender, delegate, numTokens);
+        
+        return true;
+        //delegate is like marketmaker who doesn't own the coin but have the quota to approve token from superowner to buyer
+        //What approve does is to allow an owner i.e. msg.sender to approve a delegate 
+        //account, possibly the marketplace itself, to withdraw tokens from his account 
+        //and to transfer them to other accounts.
+    }
+    
+    function allowance(address owner, address delegate) public validAddress(delegate) view override returns (uint256) {
+        return allowances[owner][delegate]; 
+        //This function returns the current approved number of 
+        //tokens by an owner to a specific delegate, as set in the approve function.
+    }
+    
+    function transferFrom(address owner, address buyer, uint256 numTokens) public override returns (bool) { 
+        require(numTokens <= balances[owner], "Owner doesn't have enough balances");
+        require(numTokens <= allowances[owner][msg.sender], "Not Enough allowances to transfer");
+        allowances[owner][msg.sender] -= numTokens;
+        balances[owner] -= numTokens;
+        balances[buyer] += numTokens;
+        emit Transfer(owner, buyer, msg.sender, numTokens);
+        return true;
+    }
+    
+     
+    //call the USDT contract's transfer function.
+    function transferUSDT(address addressOfUSDT, address receiver,uint256 numTokens) public validAddress(receiver) returns(bool) {
+    abstractUSDT myUSDT = abstractUSDT(addressOfUSDT);
+    myUSDT.transfer(receiver,numTokens);
+    return true;
+    }
+    
+    //multiple transfer the CWT token.
+    function multiTransfer(address[] memory receivers, uint256[] memory amounts) public {
+        for (uint256 i = 0; i < receivers.length; i++) {
+            require(receivers[i]==address(receivers[i]));
+            transfer(receivers[i], amounts[i]);
+        }// use this, it works ["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD[3315835cb2"]
+    }
+    
+    //the same as approve but increasing amount.
+    function increaseAllowances(address delegate, uint256 addedTokens) public onlyOwner validAddress(delegate) {
+        //uint256 newAllowances = allowances[msg.sender][delegate] + addedTokens;
+        //allowances[msg.sender][delegate] = newAllowances;
+        approve(delegate,allowances[msg.sender][delegate] + addedTokens);
+        emit Approval(delegate, addedTokens, allowances[msg.sender][delegate]);
+    }
+    
+    //the same as approve but to decrease allowances.
+    function decreaseAllowances(address delegate, uint256 subtractedTokens) public onlyOwner validAddress(delegate) {
+        //newAllowances = allowances[msg.sender][delegate] + addedTokens;
+        //allowances[msg.sender][delegate] = newAllowances
+        approve(delegate,allowances[msg.sender][delegate] - subtractedTokens);
+        emit Approval(delegate,subtractedTokens, allowances[msg.sender][delegate]);
+    }
+    
+    function mint(address account, uint256 amount) private onlyOwner{
+        require(amount > 0);
+        //require (account == SuperOwner);
+        //require(msg.sender == SuperOwner, 'Unauthorized') ;
+        balances[account] += amount;
+        _totalSupply += amount;
+        emit Mint(SuperOwner, amount, _totalSupply);
+    }
+  
+    function burn(address account, uint256 amount ) private onlyOwner{
+        require (amount > 0);
+        //require (msg.sender == SuperOwner, 'Unauthorized' ) ;
+        balances[account] -= amount;
+        _totalSupply -= amount; 
+        emit Burn(msg.sender, amount, _totalSupply);
+    }  
+}
