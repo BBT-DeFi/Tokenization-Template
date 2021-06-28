@@ -284,7 +284,7 @@ contract CrownToken is IERC20, IERC20Metadata {
     
      /* method for admin to add the start and end date of staking. 
     */
-    function addStakingPeriod (uint256 _days) public onlyOwner returns(bool){
+    function enableStakingPeriod (uint256 _days) public onlyOwner returns(bool){
         startDate = block.timestamp;
         endDate = startDate + (_days * 1 days);
         return true;
