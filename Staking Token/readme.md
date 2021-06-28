@@ -9,3 +9,5 @@ Here is how you can run the program to test its API
 
 Note:
 1.USDC is a proxy contract from Openzeppelin's ERC20 contract. It may have an issue when calling USDC.method.balanceOf().call(), ...transfer(), etc. because it'll call those ERC20 function via proxy. Need to discuss with Mon.
+
+2.Has vulnerability when admin doesn't assign the start date yet, user can still stake.
