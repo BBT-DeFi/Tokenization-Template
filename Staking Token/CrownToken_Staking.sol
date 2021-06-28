@@ -505,7 +505,7 @@ contract CrownToken is IERC20, IERC20Metadata {
     *///
     /// Has to put addressOfUSDT in case that we change the dividend coin to another contract address.
    function withdrawReward(address addressOfUSDT ) public //
-   {
+   {   require(block.timestamp >= endDate , "please wait until the reward removal date.");
        uint256 reward = rewards[msg.sender];
        
        uint256 rewardUsdt = calculateRewardToUsdt(reward); 
