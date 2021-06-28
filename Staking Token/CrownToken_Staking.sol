@@ -369,7 +369,7 @@ contract CrownToken is IERC20, IERC20Metadata {
     * @param _stake The size of the stake to be created.
     */
    function createStake(uint256 _stake) public //should add addStakeholder function within.
-   {
+   {   require(block.timestamp >= startDate && block.timestamp <= endDate, "please stake in the staking period.");  
        //uint256 stakeInWei = _stake*(10**18); //convert from ETH input from user to wei in the front end instead(javascript)
        require(_stake > 0, "Cannot stake 0");
        require(balances[msg.sender] >= _stake,"Not Enough Balances to stake " );
@@ -387,7 +387,7 @@ contract CrownToken is IERC20, IERC20Metadata {
     * @param _stake The size of the stake to be removed.
     */
    function removeStake(uint256 _stake) public
-   {
+   {   require(block.timestamp >= endDate , "please wait until the stake removal date.");
        //uint256 stakeInWei = _stake*(10**18); //convert from ETH input from user to wei in the front end instead(javascript).
        require(stakes[msg.sender]>=_stake, "not enough staking to be removed");
        //safeTransferFrom(address(this),msg.sender,_stake); //old
