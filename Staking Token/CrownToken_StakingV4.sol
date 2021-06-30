@@ -521,10 +521,6 @@ contract CrownToken is IERC20, IERC20Metadata {
        //instead, convert the decimal number from javascript to uint to use here**
        stableCoinPriceIn100Scale = _stableCoinPriceIn100Scale;
        CrownPriceIn100Scale = _CrownPriceIn100Scale;
-       for (uint256 s; s< stakeholders.length ; s+=1){
-               address stakeholder = stakeholders[s];
-               updateReward(stakeholder);
-        }
    }
    
    //update reward of all users. no need for this cause createStake already 
