@@ -1,3 +1,6 @@
+bug found:
+1.If user remove stake before admin set the dividend, their reward will be zero.
+
 Test cases (feel free to add if you have any new test case.
 
 1.user can’t stake in staking period and remove stake before removal date.
@@ -15,3 +18,5 @@ Test cases (feel free to add if you have any new test case.
 6.what if user stake when the admin hasn’t. Assign the dividend rate yet. >> error, can’t stake >> solve by not requiring calculateReward “admin hasn’t add dividend yet”
 
 7.
+
+
