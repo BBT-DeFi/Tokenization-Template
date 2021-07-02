@@ -2,6 +2,19 @@ const Crown = artifacts.require("CrownToken");
 const Usdt  = artifacts.require("USDT");
 var instance; 
 var instance2;
+var balance1;
+var balance2;
+var reward1;
+var reward2;
+var usdtBalance1;
+var usdtBalance2;
+var crownPrice;
+var stableCoinPrice;
+var staAddress;
+var decimalStableCoins;
+var RewardToStableCoinMicroether1;
+var RewardToStableCoinMicroether2;
+
 // function sleep(ms) {
 //   return new Promise(resolve => setTimeout(resolve, ms));
 // }
@@ -76,7 +89,7 @@ contract("Crown Token", accounts => {
       //convert from eth to Mwei
       var stakeAmount = 100;
       var stringStake = stakeAmount.toString()
-      var stakeMWei = web3.utils.toWei(stringStake, 'Mwei');
+      var stakeMWei = web3.utils.toWei(stringStake, 'Mwei');//Mwei = 10^6 wei
 
       //transfer Usdt from account0 to CrownContract address
       await instance2.transfer(instance.address,stakeMWei)
@@ -101,7 +114,7 @@ contract("Crown Token", accounts => {
       instance = await Crown.deployed();
       instance2 = await Usdt.deployed();
 
-      //convert from eth to Mwei
+      //convert from eth to wei
       var stakeAmount = 100;
       var stringStake = stakeAmount.toString()
       var stakeWei = web3.utils.toWei(stringStake, 'ether');
@@ -136,8 +149,13 @@ contract("Crown Token", accounts => {
       var stakeWei = web3.utils.toWei(stringStake, 'ether');
 
       //admin enable stake period
-      await instance.addStakingPeriod(30)//.send({from:accounts[1]})
+      await instance.addStakingPeriod(3)//.send({from:accounts[1]})
 
+      //admin add price input. (stable price, crownprice)
+      crownPrice = 1.00;
+      stableCoinPrice = 1.00;
+      await instance.priceInput(crownPrice*100,stableCoinPrice*100);
+      
       //user createStake 
       await instance.createStake(stakeWei,{from:accounts[1]})//.send({from:accounts[1]})
       await instance.createStake(stakeWei,{from:accounts[2]})
@@ -155,13 +173,12 @@ contract("Crown Token", accounts => {
 
     });
     
-    it("user can removestake outside removal date but don't get the usdt yet", async () =>  {
+    it("user can removestake outside removal date but don't get the usdt yet, but still have reward", async () =>  {
       
       
       //instantiate the contract to be used 
       instance = await Crown.deployed();
       instance2 = await Usdt.deployed();
-      await instance.addStakingPeriod(2)
       
       await sleep(2500) //credit by win. thanks bro.
       //setTimeout(3000);
@@ -169,33 +186,106 @@ contract("Crown Token", accounts => {
       var stakeAmount = 100;
       var stringStake = stakeAmount.toString()
       var stakeWei = web3.utils.toWei(stringStake, 'ether');
-
-      //admin enable stake period
-      
-
-      //user removestake 
-      await instance.removeStake(stakeWei,{from:accounts[1]})//.send({from:accounts[1]})
-      await instance.removeStake(stakeWei,{from:accounts[2]})
-      
-      //test balances
-      const balance1 = await instance.balanceOf.call(accounts[1]);
-      const balance2 = await instance.balanceOf.call(accounts[2]);
-      const staking1 = await instance.stakeOf(accounts[1])
-      const staking2 = await instance.stakeOf(accounts[2])
-
-      //usdt balances
+    
+      //test balances before remove the stake.
+      var balance1 = await instance.balanceOf.call(accounts[1]);
+      var balance2 = await instance.balanceOf.call(accounts[2]);
+      var staking1 = await instance.stakeOf(accounts[1])
+      var staking2 = await instance.stakeOf(accounts[2])
+      var reward1 = await instance.rewardOf(accounts[1])
+      var reward2 = await instance.rewardOf(accounts[2])
       var usdtBalance1 = await instance2.balanceOf(accounts[1])
       var usdtBalance2 = await instance2.balanceOf(accounts[2])
-      
-      //
+      //test
+      assert.equal(balance1.valueOf(), 0);
+      assert.equal(balance2.valueOf(), 0);
+      assert.equal(staking1.valueOf(), stakeWei);
+      assert.equal(staking2.valueOf(), stakeWei);
+      assert.equal(reward1.valueOf(), 0) //cause admin didn't set the dividend yet.
+      assert.equal(reward2.valueOf(), 0)
+      assert.equal(usdtBalance1.valueOf(), 0) //haven't distribute dividend yet.
+      assert.equal(usdtBalance2.valueOf(), 0)
+
+      //admin add dividend ratio.
+      await instance.inputDividend(1000)
+      //test variable.
+      var balance1 = await instance.balanceOf.call(accounts[1]);
+      var balance2 = await instance.balanceOf.call(accounts[2]);
+      var staking1 = await instance.stakeOf(accounts[1])
+      var staking2 = await instance.stakeOf(accounts[2])
+      var reward1 = await instance.rewardOf(accounts[1])
+      var reward2 = await instance.rewardOf(accounts[2])
+      var usdtBalance1 = await instance2.balanceOf(accounts[1])
+      var usdtBalance2 = await instance2.balanceOf(accounts[2])
+      //test
+      assert.equal(balance1.valueOf(), 0);
+      assert.equal(balance2.valueOf(), 0);
+      assert.equal(staking1.valueOf(), stakeWei);
+      assert.equal(staking2.valueOf(), stakeWei);
+      assert.equal(reward1.valueOf(), stakeWei/10)
+      assert.equal(reward2.valueOf(), stakeWei/10)
+      assert.equal(usdtBalance1.valueOf(), 0)
+      assert.equal(usdtBalance2.valueOf(), 0)
+
+
+      //user removestake  
+      await instance.removeStake(stakeWei,{from:accounts[1]}) //send({from:accounts[1]})
+      await instance.removeStake(stakeWei,{from:accounts[2]})
+      //test variable.
+      var balance1 = await instance.balanceOf.call(accounts[1]);
+      var balance2 = await instance.balanceOf.call(accounts[2]);
+      var staking1 = await instance.stakeOf(accounts[1])
+      var staking2 = await instance.stakeOf(accounts[2])
+      var reward1_ = await instance.rewardOf(accounts[1])
+      var reward2_ = await instance.rewardOf(accounts[2])
+      var usdtBalance1 = await instance2.balanceOf(accounts[1])
+      var usdtBalance2 = await instance2.balanceOf(accounts[2])
+      //test
       assert.equal(balance1.valueOf(), stakeWei);
       assert.equal(balance2.valueOf(), stakeWei);
       assert.equal(staking1.valueOf(), 0);
       assert.equal(staking2.valueOf(), 0);
-      assert.equal(usdtBalance1.valueOf(), 0)
-      assert.equal(usdtBalance2.valueOf(), 0)
+      assert.equal(reward1_.valueOf(), stakeWei/10)
+      assert.equal(reward2_.valueOf(), stakeWei/10)
+      
+
+      //admin set the usdt's contract address.
+      await instance.setStableCoin(instance2.address);
+      staAddress = await instance.StaAddress.call();
+      assert.equal(staAddress, instance2.address);
+      decimalStableCoins = await instance.staDeci.call();
+
+      //admin distribute reward
+      await instance.distributeRewards()
+      //test variable.
+      var balance1 = await instance.balanceOf.call(accounts[1]);
+      var balance2 = await instance.balanceOf.call(accounts[2]);
+      var staking1 = await instance.stakeOf(accounts[1])
+      var staking2 = await instance.stakeOf(accounts[2])
+      var reward1 = await instance.rewardOf(accounts[1])
+      var reward2 = await instance.rewardOf(accounts[2])
+      var usdtBalance1 = await instance2.balanceOf(accounts[1])
+      var usdtBalance2 = await instance2.balanceOf(accounts[2])
+      //test
+      var Amount = 100;
+      var stringAmount = Amount.toString();
+      var amountMWei = web3.utils.toWei(stringAmount, 'Mwei'); //Mwei = mwei = 10^6 wei
+      
+      var RewardToStableCoinMicroether1 = (((reward1_ * crownPrice * stableCoinPrice) / 1) * (10**decimalStableCoins)) / (10**18)
+      var RewardToStableCoinMicroether2 = (((reward2_ * crownPrice * stableCoinPrice) / 1) * (10**decimalStableCoins)) / (10**18)
+
+      assert.equal(balance1.valueOf(), stakeWei);
+      assert.equal(balance2.valueOf(), stakeWei);
+      assert.equal(staking1.valueOf(), 0);
+      assert.equal(staking2.valueOf(), 0);
+      assert.equal(reward1.valueOf(), 0)
+      assert.equal(reward2.valueOf(), 0)
+      assert.equal(usdtBalance1.valueOf(), RewardToStableCoinMicroether1) //***beware, this only works when the Crownreward = usdtReward in ether unit.
+      assert.equal(usdtBalance2.valueOf(), RewardToStableCoinMicroether2)
+      
     });
-    
+
+    //it("user get the reward after distribute reward or withdraw", async () =>  {
 
 
     });
