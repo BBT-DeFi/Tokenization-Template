@@ -98,15 +98,16 @@ contract CrownToken is IERC20, IERC20Metadata {
     address[] internal stakeholders; //to collect the stakeholders' address
     //ufixed public UsdtPrice; Fixed point types not implemented.
     //ufixed public CrownPrice; Fixed point types not implemented.
-    uint256 stableCoinPriceIn100Scale ;
-    uint256 CrownPriceIn100Scale;
-    uint256 startDate;
-    uint256 endDate;
-    uint decimalStableCoins;
-    address stableCoinAddress;
+    uint256 internal stableCoinPriceIn100Scale ;
+    uint256 internal CrownPriceIn100Scale;
+    uint256 public startDate;
+    uint256 public endDate;
+    uint internal decimalStableCoins;
+    address public stableCoinAddress;
     string staSyms;
     address tester;
-    uint256 dividendPercentIn100Scale;
+    uint256 internal dividendPercentIn100Scale;
+    bool private dividendChange;
     
     constructor(string memory name_, string memory symbol_, uint256 totalSupply_ , uint8 decimals_) {
         _totalSupply = totalSupply_*(10**decimals_);
@@ -354,6 +355,7 @@ contract CrownToken is IERC20, IERC20Metadata {
                address stakeholder = stakeholders[s];
                updateReward(stakeholder);
         }
+        dividendChange  = true;
         return dividendPercentIn100Scale;
     }
     
@@ -456,7 +458,8 @@ contract CrownToken is IERC20, IERC20Metadata {
     * @param _stake The size of the stake to be removed.
     */
    function removeStake(uint256 _stake) public
-   {   require(block.timestamp >= endDate && startDate >0 , "please wait until the stake removal date.");
+   {   require(dividendChange ==true,"can not remove stake when the dividend rate has not been set.");
+       require(block.timestamp >= endDate && startDate >0 , "please wait until the stake removal date.");
        //uint256 stakeInWei = _stake*(10**18); //convert from ETH input from user to wei in the front end instead(javascript).
        require(stakes[msg.sender]>=_stake, "not enough staking to be removed");
        //safeTransferFrom(address(this),msg.sender,_stake); //old
