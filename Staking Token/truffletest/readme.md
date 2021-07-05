@@ -44,7 +44,37 @@ Test cases (feel free to add if you have any new test case.
 
 8.before transfer need to check the validity of the destination address.
 
-9.
+9.remember to change staking period to days in production.
+
+10.addstake needs to use transferFrom because the user’s balances have to change, not the admin balances.
+
+11.calculateRewardToStableCoin uses stake, so when distributing the reward, it retrieve 0. Solution is to use rewardInCWT = rewards[stakeholders]; don’t link the dividend with the stake but link with the reward. OR you can mod dividend to act the same as rewards
+By not recalculate but use the 
+
+12.change calculateReward and calculateRewardStableCoin func to internal to be used by other function only.
+
+13. In web3 msg.sender has to be admin, but the interface will lure the user that they are the sender (actually they’re not). refer to steps below
+    1. When User send API, admin send transaction using web3 >> “data” : contract.methods.approve(address(this), stakeAmount); 
+        1. The problem is admin is the msg.sender but we need the msg.sender to be user who approve. At the same time, admin has to be msg.sender to pay the gas fee.
+
+14. Multi transfer has overflow.
+
+15.every time you setDividendrate, reward and dividend must change accordingly.
+
+16.when user remove stake, they don’t get the dividend because the stakeholder array got pop out >> solved by adding “isStaking ” boolean to track which users are active.
+
+17. When user remove stake before the dividend was set (this problem will occur in 3rd yr.) >> solved by using bool dividendChange to track and not letting user withdraw before dividend is set (need more discussion)
+
+18. User with enough amount of cwt can stake instead of the owner himself
+
+18.2 user with enough staking can remove stake instead of the owner himself.
+
+19.when distributingReward() >> “ERC20: transfer amount exceeds balance” but didn’t occur when withdrawReward()
+
+Note: three types of editing 
+1.//new one
+2.//old one.
+3.consider
 
 
 
