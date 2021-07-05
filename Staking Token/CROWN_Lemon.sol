@@ -197,6 +197,7 @@ contract CROWN is Ownable, ERC20 {
     mapping(address => uint256) private stakes;
     mapping(address => uint256) private rewards;
     mapping(address => uint256) private dividends;
+    mapping(address => bool) public isStaking; //new one
     address[] internal stakeholders;
     uint256 public stableCoinPriceIn100Unit = 100;
     uint256 public crownPriceIn100Unit = 100;
@@ -218,6 +219,10 @@ contract CROWN is Ownable, ERC20 {
     
     function setDividendRate(uint256 newRateIn100Unit) public onlyOwner {
         dividendRateIn100Unit = newRateIn100Unit;
+        for (uint256 s; s< stakeholders.length ; s+=1){ //new one
+               address stakeholder = stakeholders[s];//new one
+               updateReward(stakeholder);//new one
+        }
     }
 
     function setStableCoin(address addressOfStableCoin) public validAddress(addressOfStableCoin) onlyOwner returns (bool){
@@ -253,23 +258,38 @@ contract CROWN is Ownable, ERC20 {
    }
 
    function isStakeholder(address _address) public view returns(bool, uint256) {
-       for (uint256 i = 0; i < stakeholders.length; i += 1){
-           if (_address == stakeholders[i]) return (true, i);
-       }
-       return (false, 0);
+    //   for (uint256 i = 0; i < stakeholders.length; i += 1){ //old one
+    //       if (_address == stakeholders[i]) return (true, i);//old one
+    //   }//old one
+    //   return (false, 0); //old one
+        for (uint256 s = 0; s < stakeholders.length; s += 1){
+               if (_address == stakeholders[s] && isStaking[_address] ==true){
+                   return (true, s);
+               } 
+           }
+           return (false, 0); //new one
    }
 
    function addStakeholder(address stakeHolder) internal validAddress(stakeHolder) {
-       (bool _isStakeholder, ) = isStakeholder(stakeHolder);
-       if (!_isStakeholder) stakeholders.push(stakeHolder);
+    //   (bool _isStakeholder, ) = isStakeholder(stakeHolder);
+    //   if (!_isStakeholder) stakeholders.push(stakeHolder); old one.
+        bool _isStaking = isStaking[stakeHolder];
+        if(!_isStaking) {
+           stakeholders.push(stakeHolder);
+           isStaking[stakeHolder] = true;
+       } //new one
    }
 
    function removeStakeholder(address stakeHolder) internal validAddress(stakeHolder) {
-       (bool _isStakeholder, uint256 i) = isStakeholder(stakeHolder);
-       if (_isStakeholder){
-           stakeholders[i] = stakeholders[stakeholders.length - 1];
-           stakeholders.pop();
-       }
+    //   (bool _isStakeholder, uint256 i) = isStakeholder(stakeHolder);
+    //   if (_isStakeholder){
+    //       stakeholders[i] = stakeholders[stakeholders.length - 1];
+    //       stakeholders.pop();
+    //   } //old one.
+        bool _isStaking = isStaking[stakeHolder];
+        if(_isStaking){
+           isStaking[stakeHolder] = false;
+        } // new one.
    }
 
    function stakeOf(address stakeHolder) public view validAddress(stakeHolder) returns (uint256) {
@@ -282,7 +302,7 @@ contract CROWN is Ownable, ERC20 {
 
    function totalStakes() public view returns (uint256) {
        uint256 _totalStakes = 0;
-       for (uint256 i = 0; i < stakeholders.length; i += 1){
+       for (uint256 i = 0; i < stakeholders.length; i += 1){//new one >> consider checking if stakes[stakeholders[i]] > 0 before +=
            _totalStakes += (stakes[stakeholders[i]]);
        }
        return _totalStakes;
@@ -293,7 +313,9 @@ contract CROWN is Ownable, ERC20 {
        require(block.timestamp >= startDate && block.timestamp <= endDate, "Please stake in the staking period!");
        require(stakeAmount > 0, "Can not stake zero token");
        require(balanceOf(stakeHolder) >= stakeAmount,"Not enough token to stake!");
-       transfer(address(this), stakeAmount);
+       //approve(address(this), stakeAmount); // a new one.
+       //transferFrom(stakeHolder,address(this), stakeAmount); the new one.    //transfer(address(this), stakeAmount); the old one.
+       transfer(address(this), stakeAmount);//for testing 
        if (stakes[stakeHolder] == 0) addStakeholder(stakeHolder);
        stakes[stakeHolder] += stakeAmount;
        emit AddStake(stakeHolder, stakeAmount, block.timestamp);
@@ -316,18 +338,19 @@ contract CROWN is Ownable, ERC20 {
 
    function totalRewards() public view returns(uint256) {
        uint256 _totalRewards = 0;
-       for (uint256 i = 0; i < stakeholders.length; i += 1){
+       for (uint256 i = 0; i < stakeholders.length; i += 1){ //consider adding if rewards[stakeholders[i]] >0
            _totalRewards += rewards[stakeholders[i]];
        }
        return _totalRewards;
    }
 
-   function calculateReward(address stakeHolder) public view validAddress(stakeHolder) returns (uint256) {
+   function calculateReward(address stakeHolder) internal view validAddress(stakeHolder) returns (uint256) { //public view returns; old one
        uint256 rewardCWT = (stakes[stakeHolder] * dividendRateIn100Unit) / 10000;
        return rewardCWT;
    }
    
    function priceFeeding(uint256 _stableCoinPriceIn100Unit, uint256 _crownPriceIn100Unit) public onlyOwner {
+       require(_stableCoinPriceIn100Unit >0 && _crownPriceIn100Unit>0,"price must be more than 0"); //new one.
        stableCoinPriceIn100Unit = _stableCoinPriceIn100Unit;
        crownPriceIn100Unit = _crownPriceIn100Unit;
    }
@@ -337,8 +360,8 @@ contract CROWN is Ownable, ERC20 {
        dividends[stakeHolder] = calculateRewardToStableCoin(stakeHolder);
    }
    
-   function calculateRewardToStableCoin(address stakeHolder) public view returns (uint256) {
-       uint256 rewardInCWT = calculateReward(stakeHolder);
+   function calculateRewardToStableCoin(address stakeHolder) internal view returns (uint256) { //public view returns; old one
+       uint256 rewardInCWT = calculateReward(stakeHolder);//calculateReward(stakeHolder); old one
        require(crownPriceIn100Unit > 0 && stableCoinPriceIn100Unit > 0, "No price feeding found!");
        uint256 rewardInStableCoin = ((rewardInCWT * crownPriceIn100Unit * stableCoinPriceIn100Unit) / 10000) / ((10**18) / (10**decimalStableCoin));
        return rewardInStableCoin;
@@ -350,13 +373,20 @@ contract CROWN is Ownable, ERC20 {
         require(stableCoinAddress != address(0), "Not specified stable coin's contract yet!");
         for (uint256 i = 0; i < stakeholders.length; i += 1) {
            address stakeholder = stakeholders[i];
-           uint256 reward = rewards[stakeholder];
+           uint256 reward = rewards[stakeholder];  
+           uint256 dividend = dividends[stakeholder];//the new one.
            if (reward > 0) {
-               uint256 rewardStableCoin = calculateRewardToStableCoin(stakeholder); 
+               uint256 rewardStableCoin = dividend; //uint256 rewardStableCoin = calculateRewardToStableCoin(stakeholder); old one
                IERCToken(stableCoinAddress).transfer(stakeholder, rewardStableCoin);
+               
+               _transfer(address(this), stakeholder, stakes[stakeholder]);  //new one
+               //stakes[stakeholder] -= stakes[stakeholder] ;//new one
                rewards[stakeholder] -= reward;
-               dividends[stakeholder] -= rewardStableCoin;
-               emit DividenPaid(stakeholder, reward, block.timestamp); 
+               dividends[stakeholder] -= dividend;//dividends[stakeholder] -= rewardStableCoin; old one
+               
+               removeStake(stakeholder,stakes[stakeholder]); //new one.
+
+               emit DividenPaid(stakeholder, reward, block.timestamp); //consider adding dividend in event
            }
         }
    }
@@ -364,13 +394,16 @@ contract CROWN is Ownable, ERC20 {
    function withdrawReward(address stakeHolder) public {
        require(startDate > 0 && endDate > 0, "Invalid stake end date!");
        require(block.timestamp >= endDate, "Please wait until the reward removal date.");
-       require(stableCoinAddress != address(0), "Not specified stable coin's contract yet!");   
+       require(stableCoinAddress != address(0), "Not specified stable coin's contract yet!");
+       require(rewards[stakeHolder] > 0,"You don't have the reward to withdraw."); //new one.
        uint256 reward = rewards[stakeHolder];
+       uint256 dividend = dividends[stakeHolder];//the new one.
        if (reward > 0) {
-           uint256 rewardStableCoin = calculateRewardToStableCoin(stakeHolder);
+           uint256 rewardStableCoin = dividend; //uint256 rewardStableCoin = calculateRewardToStableCoin(stakeHolder); old one
            IERCToken(stableCoinAddress).transfer(stakeHolder, rewardStableCoin);
            rewards[stakeHolder] -= reward;
-           dividends[stakeHolder] -= rewardStableCoin;
+           dividends[stakeHolder] -= dividend;//dividends[stakeHolder] -= rewardStableCoin; old one
+           removeStake(stakeHolder,stakes[stakeHolder]); //new one.
            emit DividenPaid(stakeHolder, reward, block.timestamp); 
        }
    }
