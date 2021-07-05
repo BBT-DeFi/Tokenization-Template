@@ -4,13 +4,23 @@ Bug found:
   
   solved by either one of these two options:
   
-    Done 1.require that dividendIn100Scale has changed once. create new variable of tracking the change of dividend.
+    Done 1.require that dividendIn100Scale has changed once. create new variable of tracking the change of dividend >> dividendChange ==true when inputDividend.
     
     Unused 2.require that dividendIn100Scale >= 0. But this has a flaw that sometimes, dividend can be 0 too.
     
 2. admin can not inputdividend percent =0 
     
   solved by taking the requirement out.
+  
+3.//to reset the dividend change >> 
+
+  admin must put the dividend ratio every payment round, otherwise users can not remove their stake.
+        
+        added dividendChange = false; every time admin distribute reward
+  
+  admin can remove users' stakes by distributeReward.
+        
+        
 
 
 
