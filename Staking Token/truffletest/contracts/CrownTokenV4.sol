@@ -349,7 +349,7 @@ contract CrownToken is IERC20, IERC20Metadata {
     
     /* Admin inputs dividend in percent >> 8% >> input = 8 */
     function inputDividend(uint256 _dividendPercentIn100Scale) public onlyOwner returns(uint256){
-        require(_dividendPercentIn100Scale > 0, "can't assign dividend <=0");  
+        //require(_dividendPercentIn100Scale > 0, "can't assign dividend <=0");  
         dividendPercentIn100Scale = _dividendPercentIn100Scale;
         for (uint256 s; s< stakeholders.length ; s+=1){
                address stakeholder = stakeholders[s];
