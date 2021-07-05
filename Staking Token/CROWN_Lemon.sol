@@ -242,7 +242,7 @@ contract CROWN is Ownable, ERC20 {
     //multiple transfer the CWT token.
     function multiTransfer(address[] memory receivers, uint256[] memory amounts) public {
         for (uint256 i = 0; i < receivers.length; i++) {
-            require(receivers[i]==address(receivers[i]));
+            //require(receivers[i]==address(receivers[i]));
             transfer(receivers[i], amounts[i]);
         }
     }
@@ -379,7 +379,6 @@ contract CROWN is Ownable, ERC20 {
                uint256 rewardStableCoin = dividend; //uint256 rewardStableCoin = calculateRewardToStableCoin(stakeholder); old one
                IERCToken(stableCoinAddress).transfer(stakeholder, rewardStableCoin);
                
-               _transfer(address(this), stakeholder, stakes[stakeholder]);  //new one
                //stakes[stakeholder] -= stakes[stakeholder] ;//new one
                rewards[stakeholder] -= reward;
                dividends[stakeholder] -= dividend;//dividends[stakeholder] -= rewardStableCoin; old one
