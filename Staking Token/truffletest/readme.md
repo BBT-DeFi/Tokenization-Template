@@ -1,4 +1,5 @@
-bug found:
+Bug found:
+
 1.If user remove stake before admin set the dividend, their reward will be zero.
   
   solved by either one of these two options:
@@ -6,6 +7,10 @@ bug found:
     Done 1.require that dividendIn100Scale has changed once. create new variable of tracking the change of dividend.
     
     Unused 2.require that dividendIn100Scale >= 0. But this has a flaw that sometimes, dividend can be 0 too.
+    
+2. admin can not inputdividend percent =0 
+    
+  solved by taking the requirement out.
 
 
 
