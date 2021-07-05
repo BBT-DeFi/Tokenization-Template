@@ -38,8 +38,13 @@ Test cases (feel free to add if you have any new test case.
 
 5.before distributeReward and withdraw reward, the priceinput and dividend must be there.
 
-6.what if user stake when the admin hasn’t. Assign the dividend rate yet. >> error, can’t stake >> solve by not requiring calculateReward “admin hasn’t add dividend yet”
+6.what if user stake when the admin hasn’t assigned the dividend rate yet. >> error, can’t stake >> solve by not requiring calculateReward “admin hasn’t add dividend yet”
 
-7.
+7.distribute reward doesn't distribute to the second stakeholder >> solved on 1 July by using the boolean mapping "isStaking" to collect which stakeholders are active but not pop out the stakeholder in the array. Beware, adding "isStaking" change its relative function so you have to change other function too.
+
+8.before transfer need to check the validity of the destination address.
+
+9.
+
 
 
