@@ -257,7 +257,7 @@ contract CROWN is Ownable, ERC20 {
         return true;
    }
 
-   function isStakeholder(address _address) public view returns(bool, uint256) validAddress(_address) {
+   function isStakeholder(address _address) public view validAddress(_address) returns(bool, uint256) {
     //   for (uint256 i = 0; i < stakeholders.length; i += 1){ //old one
     //       if (_address == stakeholders[i]) return (true, i);//old one
     //   }//old one
