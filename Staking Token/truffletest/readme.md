@@ -46,7 +46,7 @@ Test cases (feel free to add if you have any new test case.
 
 9.remember to change staking period to days in production.*** Later when deploy
 
-10.addstake needs to use transferFrom because the user’s balances have to change, not the admin balances.
+-10.addstake needs to use transferFrom because the user’s balances have to change, not the admin balances.
 
 -11.calculateRewardToStableCoin uses stake, so when distributing the reward, it retrieve 0. Solution is to use rewardInCWT = rewards[stakeholders]; don’t link the dividend with the stake but link with the reward. OR you can mod dividend to act the same as rewards
 By not recalculate but use the 
@@ -63,8 +63,8 @@ By not recalculate but use the
 -16.when user remove stake, they don’t get the dividend because the stakeholder array got pop out >> solved by adding “isStaking ” boolean to track which users are active.
 
 17. When user remove stake before the dividend was set (this problem will occur in 3rd yr.) >> solved by using bool dividendChange to track and not letting user withdraw before dividend is set (need more discussion)
-18. User with enough amount of cwt can stake instead of the owner himself
-18.2 user with enough staking can remove stake instead of the owner himself.
+-18. User with enough amount of cwt can stake instead of the owner himself
+-18.2 user with enough staking can remove stake instead of the owner himself.
 
 -19.when distributingReward() >> “ERC20: transfer amount exceeds balance” but didn’t occur when withdrawReward()
 
