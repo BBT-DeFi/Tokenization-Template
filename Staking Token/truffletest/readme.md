@@ -48,7 +48,7 @@ Test cases (feel free to add if you have any new test case.
 
 -10.addstake needs to use transferFrom because the user’s balances have to change, not the admin balances.
 
--11.calculateRewardToStableCoin uses stake, so when distributing the reward, it retrieve 0. Solution is to use rewardInCWT = rewards[stakeholders]; don’t link the dividend with the stake but link with the reward. OR you can mod dividend to act the same as rewards
+-11.calculateRewardToStableCoin uses stake, so when distributing the reward, it retrieve 0. Solution is to set reward = rewards[stakeholder] and dividend = dividends[stakeholder] to collect the previous state of reward and dividend (not re-calculate it because it will reset the reward to 0);
 By not recalculate but use the 
 
 -12.change calculateReward and calculateRewardStableCoin func to internal to be used by other function only.
@@ -68,6 +68,13 @@ By not recalculate but use the
 
 -19.when distributingReward() >> “ERC20: transfer amount exceeds balance” but didn’t occur when withdrawReward()
 
+21.Beware when the admin set dividend ()
+
+	1.web3 must pass 400 to solidity not 4 because that will be 0.04%
+	2.if admin pass 4.94932 to web3
+	3. ...
+  
+-22.check if the reward >0 before removeStake in the distributeReward() and withdrawReward() 
 Note: three types of editing 
 1.//new one
 2.//old one.
