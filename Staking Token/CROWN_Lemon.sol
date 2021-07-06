@@ -242,7 +242,7 @@ contract CROWN is Ownable, ERC20 {
     //multiple transfer the CWT token.
     function multiTransfer(address[] memory receivers, uint256[] memory amounts) public {
         for (uint256 i = 0; i < receivers.length; i++) {
-            //require(receivers[i]==address(receivers[i]));
+            require(receivers[i] == address(receivers[i]));
             transfer(receivers[i], amounts[i]);
         }
     }
@@ -251,13 +251,13 @@ contract CROWN is Ownable, ERC20 {
 //-------------------------------- Staking Functions ---------------------------------------------
 //------------------------------------------------------------------------------------------------
     
-   function setStakingPeriod (uint256 periodInDay) public onlyOwner returns(bool){
+   function setStakingPeriod (uint256 periodInDay) public onlyOwner returns(bool) {
         startDate = block.timestamp;
         endDate = startDate + (periodInDay * 1 minutes);
         return true;
    }
 
-   function isStakeholder(address _address) public view returns(bool, uint256) {
+   function isStakeholder(address _address) public view returns(bool, uint256) validAddress(_address) {
     //   for (uint256 i = 0; i < stakeholders.length; i += 1){ //old one
     //       if (_address == stakeholders[i]) return (true, i);//old one
     //   }//old one
@@ -390,7 +390,7 @@ contract CROWN is Ownable, ERC20 {
         }
    }
    
-   function withdrawReward(address stakeHolder) public {
+   function withdrawReward(address stakeHolder) public validAddress(stakeHolder) {
        require(startDate > 0 && endDate > 0, "Invalid stake end date!");
        require(block.timestamp >= endDate, "Please wait until the reward removal date.");
        require(stableCoinAddress != address(0), "Not specified stable coin's contract yet!");
@@ -407,4 +407,3 @@ contract CROWN is Ownable, ERC20 {
        }
    }
 }
-   
