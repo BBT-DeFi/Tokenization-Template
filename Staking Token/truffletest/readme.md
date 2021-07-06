@@ -70,7 +70,7 @@ By not recalculate but use the
 
 -19.when distributingReward() >> “ERC20: transfer amount exceeds balance” but didn’t occur when withdrawReward()
 
-***21.Beware when the admin set dividend ()
+***21.Beware when the admin set dividendRate() and coins' prices
 
 	1.web3 must pass both coins' prices and dividend In100Scale to solidity not 4 because that will be 0.04%.
 	2.if admin pass 4.94932 to web3
