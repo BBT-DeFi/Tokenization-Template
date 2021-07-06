@@ -313,9 +313,10 @@ contract CROWN is Ownable, ERC20 {
        require(block.timestamp >= startDate && block.timestamp <= endDate, "Please stake in the staking period!");
        require(stakeAmount > 0, "Can not stake zero token");
        require(balanceOf(stakeHolder) >= stakeAmount,"Not enough token to stake!");
+       require(msg.sender == owner() || msg.sender == stakeHolder, "Just an admin & stakeHolder can remove stake!");
        //approve(address(this), stakeAmount); // a new one.
        //transferFrom(stakeHolder,address(this), stakeAmount); the new one.    //transfer(address(this), stakeAmount); the old one.
-       transfer(address(this), stakeAmount);//for testing 
+       _transfer(stakeHolder, address(this), stakeAmount);//for testing 
        if (stakes[stakeHolder] == 0) addStakeholder(stakeHolder);
        stakes[stakeHolder] += stakeAmount;
        emit AddStake(stakeHolder, stakeAmount, block.timestamp);
@@ -326,6 +327,7 @@ contract CROWN is Ownable, ERC20 {
        require(startDate > 0 && endDate > 0, "Invalid stake end date!");
        require(block.timestamp >= endDate, "Please wait until the stake removal date!");
        require(stakes[stakeHolder] >= stakeAmount, "Not enough staking to be removed!");
+       require(msg.sender == owner() || msg.sender == stakeHolder, "Just an admin & stakeHolder can remove stake!");
        _transfer(address(this), stakeHolder, stakeAmount); 
        stakes[stakeHolder] -= stakeAmount;
        if (stakes[stakeHolder] == 0) removeStakeholder(stakeHolder);
@@ -395,6 +397,7 @@ contract CROWN is Ownable, ERC20 {
        require(block.timestamp >= endDate, "Please wait until the reward removal date.");
        require(stableCoinAddress != address(0), "Not specified stable coin's contract yet!");
        require(rewards[stakeHolder] > 0,"You don't have the reward to withdraw."); //new one.
+       require(msg.sender == owner() || msg.sender == stakeHolder, "Just an admin & stakeHolder can remove stake!");
        uint256 reward = rewards[stakeHolder];
        uint256 dividend = dividends[stakeHolder];//the new one.
        if (reward > 0) {
