@@ -1,0 +1,8 @@
+exit
+clear
+ls
+exit
+hardhat.
+hardhat
+const hardhat = require("hardhat")
+config
