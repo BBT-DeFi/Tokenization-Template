@@ -215,14 +215,16 @@ contract CROWN is Ownable, ERC20 {
     Dividend[] private dividendList;
     
     struct Dividend {
-        address stakeholder;
+        address from;
+        address to;
         uint256 amount;
+        string symbol;
         uint256 time; 
     }
     
     event AddStake(address indexed stakeholder, uint256 amount, uint256 timestamp);
     event RemoveStake(address indexed stakeholder, uint256 amount, uint256 timestamp);
-    event DividenPaid(address indexed stakeholder, uint256 amount, uint256 timestamp);
+    event DividenPaid(address indexed to, uint256 amount, uint256 timestamp);
     
     modifier validAddress(address account){    
         require(account == address(account),"Invalid address");
@@ -387,11 +389,12 @@ contract CROWN is Ownable, ERC20 {
            if (reward > 0) {
                uint256 rewardStableCoin = dividend;
                IERCToken(stableCoinAddress).transfer(stakeholder, rewardStableCoin);
+               string memory tokenSymbol = IERC20Metadata(stableCoinAddress).symbol();
                rewards[stakeholder] -= reward;
                dividends[stakeholder] -= dividend;
-               removeStake(stakeholder,stakes[stakeholder]);
-               dividendList.push(Dividend(stakeholder, reward, block.timestamp));
-               dividendHistory[stakeholder].push(Dividend(stakeholder, reward, block.timestamp));
+               removeStake(stakeholder, stakes[stakeholder]);
+               dividendList.push(Dividend(address(this), stakeholder, reward, tokenSymbol, block.timestamp));
+               dividendHistory[stakeholder].push(Dividend(address(this), stakeholder, reward, tokenSymbol, block.timestamp));
                emit DividenPaid(stakeholder, reward, block.timestamp);
            }
         }
@@ -408,11 +411,12 @@ contract CROWN is Ownable, ERC20 {
        if (reward > 0) {
            uint256 rewardStableCoin = dividend;
            IERCToken(stableCoinAddress).transfer(stakeHolder, rewardStableCoin);
+           string memory tokenSymbol = IERC20Metadata(stableCoinAddress).symbol();
            rewards[stakeHolder] -= reward;
            dividends[stakeHolder] -= dividend;
            removeStake(stakeHolder,stakes[stakeHolder]);
-           dividendList.push(Dividend(stakeHolder, reward, block.timestamp));
-           dividendHistory[stakeHolder].push(Dividend(stakeHolder, reward, block.timestamp));
+           dividendList.push(Dividend(address(this), stakeHolder, reward, tokenSymbol, block.timestamp));
+           dividendHistory[stakeHolder].push(Dividend(address(this), stakeHolder, reward, tokenSymbol, block.timestamp));
            emit DividenPaid(stakeHolder, reward, block.timestamp); 
        }
    }
